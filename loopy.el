@@ -40,7 +40,7 @@
 ;;   ‘loopy-insert’ The primary command defined by this package.
 ;;   ‘loopy-add-clause’ Adds a single clause to an existing loop.
 
-;; It also offers the following Custom variables (which see):
+;; It also offers the following custom variables (which see):
 ;;   ‘loopy-offer-type-specifiers’
 ;;   ‘loopy-allow-destructuring’
 ;;   ‘loopy-enter-recursive-edit’
@@ -58,6 +58,9 @@
 (declare-function seq-difference "seq" (sequence1 sequence2 &optional testfn))
 (declare-function looking-back "subr" (regexp limit &optional greedy))
 (declare-function string-trim "subr-x" (string &optional trim-left trim-right))
+(defvar loopy-offer-type-specifiers)
+(defvar loopy-allow-destructuring)
+(defvar loopy-enter-recursive-edit)
 
 (defgroup loopy nil
   "Interactively insert CL-style LOOP macros."
@@ -75,46 +78,6 @@
   '(menu-item "Insert Loop Macro"
               loopy-insert
               :help "Insert a LOOP macro"))
-
-
-;;;; Custom Variables
-
-(defcustom loopy-offer-type-specifiers nil
-  "If non-nil, offer type specifiers where appropriate.
-
-This affects clauses such as ‘with’ and ‘for’ clauses, where a
-variable can be specified together with a type specification.
-
-See also ‘loopy-toggle-type-specifiers’."
-  :type 'boolean
-  :set #'loopy--set
-  :group 'loopy)
-
-(defcustom loopy-allow-destructuring nil
-  "If non-nil, suppose variable names to be destructuring arguments.
-
-This affects all forms in a loop clause where destructuring is
-possible, such as the iteration variable of a ‘for’ clause.
-
-If ‘loopy-enter-recursive-edit’ is non-nil, this will cause the
-skeleton insertion to enter recursive editing instead of
-prompting for a variable name in the minibuffer.
-
-See also ‘loopy-toggle-destructuring’ and
-‘loopy-enter-recursive-edit’."
-  :type 'boolean
-  :set #'loopy--set
-  :group 'loopy)
-
-(defcustom loopy-enter-recursive-edit t
-  "If non-nil, enter recursive editing for complex forms within loops.
-
-If nil, prompt for expressions in the minibuffer instead.
-
-See also ‘loopy-toggle-recursive-editing’."
-  :type 'boolean
-  :set #'loopy--set
-  :group 'loopy)
 
 
 ;;;; User-Level Variables
@@ -219,8 +182,6 @@ user in completing prompts, as well as those used in extended
 forms.")
 
 
-;;;; Internal Variables
-
 ;;; Common Lisp LOOP
 ;; This alist is largely a translated version of LOOP's BFN from the
 ;; CLHS, see http://www.lispworks.com/documentation/HyperSpec/Body/m_loop.htm.
@@ -425,10 +386,6 @@ dialog."
           syntax-entries)
     (nreverse syntax-entries)))
 
-(unless loopy-default-cl-syntax-alist
-  (setq-default loopy-default-cl-syntax-alist
-                (loopy--create-cl-syntax-alist)))
-
 
 ;;; Emacs Lisp (Elisp)
 ;; This alist is a modified version of the above, with additions and
@@ -604,10 +561,6 @@ dialog."
           syntax-entries)
     (nreverse syntax-entries)))
 
-(unless loopy-default-el-syntax-alist
-  (setq-default loopy-default-el-syntax-alist
-                (loopy--create-el-syntax-alist)))
-
 
 ;;; General
 
@@ -620,6 +573,16 @@ dialog."
          ((derived-mode-p 'lisp-mode)
           loopy-default-cl-syntax-alist)
          (t (error "Unknown mode: %S" major-mode)))))
+
+
+;;;; Public Functions
+
+(defun loopy-update-syntax-alists ()
+  "Re-evaluate default syntax alists."
+  (setq loopy-default-cl-syntax-alist
+        (loopy--create-cl-syntax-alist)
+        loopy-default-el-syntax-alist
+        (loopy--create-el-syntax-alist)))
 
 
 ;;;; Utility Functions
@@ -648,10 +611,53 @@ Returns a skeleton element (the string \"\\s\" or nil)."
   (when (= (point) (line-beginning-position))
     (delete-char -1)))
 
+
+
+;;;; Custom Variables
+
 (defun loopy--set (symbol value)
   "Set SYMBOL's default value to VALUE and update syntax alists."
   (prog1 (set-default symbol value)
-    (loopy-update-syntax-alists)))
+    ;; Do NOT update while loading the package!
+    (when (featurep 'loopy)
+      (loopy-update-syntax-alists))))
+
+(defcustom loopy-offer-type-specifiers nil
+  "If non-nil, offer type specifiers where appropriate.
+
+This affects clauses such as ‘with’ and ‘for’ clauses, where a
+variable can be specified together with a type specification.
+
+See also ‘loopy-toggle-type-specifiers’."
+  :type 'boolean
+  :set #'loopy--set
+  :group 'loopy)
+
+(defcustom loopy-allow-destructuring nil
+  "If non-nil, suppose variable names to be destructuring arguments.
+
+This affects all forms in a loop clause where destructuring is
+possible, such as the iteration variable of a ‘for’ clause.
+
+If ‘loopy-enter-recursive-edit’ is non-nil, this will cause the
+skeleton insertion to enter recursive editing instead of
+prompting for a variable name in the minibuffer.
+
+See also ‘loopy-toggle-destructuring’ and
+‘loopy-enter-recursive-edit’."
+  :type 'boolean
+  :set #'loopy--set
+  :group 'loopy)
+
+(defcustom loopy-enter-recursive-edit t
+  "If non-nil, enter recursive editing for complex forms within loops.
+
+If nil, prompt for expressions in the minibuffer instead.
+
+See also ‘loopy-toggle-recursive-editing’."
+  :type 'boolean
+  :set #'loopy--set
+  :group 'loopy)
 
 
 ;;;; Expansion Functions
@@ -1062,16 +1068,6 @@ subskeleton, even if SYNTAX-ELEMENTS is a list."
             something-else))))
 
 
-;;;; Public Functions
-
-(defun loopy-update-syntax-alists ()
-  "Re-evaluate default syntax alists."
-  (setq loopy-default-cl-syntax-alist
-        (loopy--create-cl-syntax-alist)
-        loopy-default-el-syntax-alist
-        (loopy--create-el-syntax-alist)))
-
-
 ;;;; Interactive Functions
 (defun loopy-toggle-type-specifiers ()
   "Toggle destructuring arguments for interactive loop insertion.
@@ -1166,6 +1162,16 @@ consumed as needed.  The most recent region is consumed last."
   '(loopy--init-alist)
   (loopy--expand 'extra-clause)
   (loopy--delete-trailing-whitespace))
+
+;;;; Initialization
+(unless loopy-default-cl-syntax-alist
+  (setq-default loopy-default-cl-syntax-alist
+                (loopy--create-cl-syntax-alist)))
+
+(unless loopy-default-el-syntax-alist
+  (setq-default loopy-default-el-syntax-alist
+                (loopy--create-el-syntax-alist)))
+
 
 (provide 'loopy)
 ;;; loopy.el ends here
