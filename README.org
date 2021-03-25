@@ -4,8 +4,10 @@
 
 
 * WARNING!
-This package is still in beta.  Breaking changes may occur without
-warning until the release of version *1.0.0*.
+Breaking changes may occur are to be expected until the release of
+version *1.0.0*.  However, the package has reached a point of maturity
+where I plan to mostly focus on quality of life changes, which require
+the presence of feedback more than anything.
 
 * About
   This package implements interactive completion for the loop facility
@@ -21,7 +23,7 @@ warning until the release of version *1.0.0*.
   * ~loopy-insert~: The primary command defined by this package.
   * ~loopy-add-clause~: Adds a single clause to an existing loop.
 
-  It also offers the following Custom variables (which see):
+  It also offers the following custom variables (which see):
   * ~loopy-offer-type-specifiers~
   * ~loopy-allow-destructuring~
   * ~loopy-enter-recursive-edit~
@@ -31,3 +33,9 @@ warning until the release of version *1.0.0*.
   * ~loopy-toggle-type-specifiers~
   * ~loopy-toggle-recursive-editing~
   * ~loopy-toggle-destructuring~
+
+* NEWS
+
+** =2020-03-25=
+   Loopy is now public!  Being a minor side project, I do not plan to
+   put this package on MELPA  until I had more feedback.
