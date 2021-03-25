@@ -1,0 +1,32 @@
+#+TITLE:loopy: Auto-Inserting (cl-)loop Macros
+
+[[file:images/loopy.png]]
+
+
+*NOTE:* This package is still in beta.  Breaking changes may occur
+without warning until the release of version *1.0.0*.
+
+* About
+  This package implements interactive completion for the loop facility
+  in Common Lisp and Elisp, and adds an appropriate menu entry to
+  ~emacs-lisp-mode~ and ~lisp-mode~.
+
+  This package requires no additional setup to work.  The primary
+  interactive function (~loopy-insert~) is autoloaded.  By default it is
+  *not* bound to any key, but automatically added to the menus
+  Emacs-Lisp (in ~emacs-lisp-mode~) and Lisp (in ~lisp-mode~) once loaded.
+
+  loopy defines the following insertion commands:
+  * ~loopy-insert~: The primary command defined by this package.
+  * ~loopy-add-clause~: Adds a single clause to an existing loop.
+
+  It also offers the following Custom variables (which see):
+  * ~loopy-offer-type-specifiers~
+  * ~loopy-allow-destructuring~
+  * ~loopy-enter-recursive-edit~
+
+  Each variable may also be toggled interactively by corresponding
+  commands.
+  * ~loopy-toggle-type-specifiers~
+  * ~loopy-toggle-recursive-editing~
+  * ~loopy-toggle-destructuring~
